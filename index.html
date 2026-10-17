@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>むだなくカット</title>
+<style>
+:root{--bg:#faf6f0;--card:#fff;--tx:#3b2f25;--sub:#7a6b5d;--ac:#b5703a;--bd:#e6dccf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1e1a16;--card:#2a2520;--tx:#f0e8dd;--sub:#b3a595;--ac:#e0985c;--bd:#40382f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1e1a16;--card:#2a2520;--tx:#f0e8dd;--sub:#b3a595;--ac:#e0985c;--bd:#40382f;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.6;padding:16px;max-width:780px;margin-inline:auto}
+h1{font-size:1.25rem;margin:.2em 0}
+h2{font-size:1.1rem;margin:1.2em 0 .2em;color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:12px 0}
+.sub{color:var(--sub);font-size:.85rem}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th{font-size:.8rem;color:var(--sub);text-align:left;font-weight:normal}
+td{padding:4px 4px 4px 0}
+input,select{width:100%;font-size:1rem;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+button{font-size:1rem;border:0;border-radius:8px;padding:10px 14px;background:var(--ac);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+button.x{background:transparent;color:var(--sub);padding:6px 10px}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.scroll{overflow-x:auto}
+.step h3{margin:.2em 0;font-size:1rem}
+ul{margin:.3em 0;padding-left:1.2em}
+.stat{font-size:1.05rem}
+.no{font-size:1.3rem;color:var(--ac);width:1.9em}
+label{margin-right:18px;font-size:1rem;white-space:nowrap}
+input[type=radio]{width:auto;margin-right:6px}
+</style>
+</head>
+<body>
+<h1>✂️ むだなくカット</h1>
+<p class="sub">レシピの表を入力すると、12本幅テープから無駄なく切り出す順番を出します。「3本取り」も「3本幅」も、数字の3をそのまま幅の欄に入力してください。<br>※最初に入っている数字は例です。ご自分のレシピの数字に書き換えてください。<br>※個人で利用することを前提にしたアプリです。ご利用前に、いちばん下の「ご利用にあたって」をお読みください。</p>
+
+<div class="card"><b>複数の色を使いますか？</b>
+<div class="row"><label><input type="radio" name="mc" value="0">使わない</label><label><input type="radio" name="mc" value="1" checked>使う</label></div></div>
+
+<div class="card">
+<div class="scroll"><table><thead><tr><th></th><th>パーツ名（メモ）</th><th class="colc">色</th><th>幅(本)</th><th>長さ(cm)</th><th>本数</th><th></th></tr></thead>
+<tbody id="rows"></tbody></table></div>
+<div class="row"><button class="ghost" id="add">＋ 行を追加</button><button id="go">カット順を出す</button></div>
+</div>
+
+<div id="out"></div>
+
+<div class="card">
+<b>ご利用にあたって（但し書き）</b>
+<ul class="sub" style="margin:.4em 0">
+<li>個人で利用することを前提にしたアプリです。出力されたデータを他の人に共有したり、配布・公開する目的では使わないでください。</li>
+<li>計算結果は目安です。必ずしも最も無駄の少ない切り方とは限りません。テープの実際の長さや、切りしろ・ゆがみなどは考慮していないので、切る前にご自身で確認し、余裕をもって材料を用意してください。</li>
+<li>レシピ（本や教材の内容）の権利は、それぞれの著者・出版社にあります。入力するのは、ご自身が作るために必要な数字だけにしてください。レシピの内容をそのまま写して公開することはしないでください。</li>
+<li>作品を販売する場合は、レシピの本や教材の利用ルールを確認してください。</li>
+<li>入力した内容や結果は保存されません。ページを閉じたり更新したりすると消えます。必要な場合は、ご自身でメモや画面の保存をしてください。</li>
+<li>計算結果を使って作業した結果（材料の不足など）については、ご自身の判断でお願いします。</li>
+</ul>
+</div>
+
+<script>
+var COLORS=function(w){return "hsl("+(w*31%360)+",55%,62%)"};
+var rowsEl=document.getElementById("rows");
+function cn(n){return n<=20?String.fromCharCode(0x2460+n-1):"("+n+")"}
+function mc(){return document.querySelector('input[name=mc]:checked').value==="1"}
+function applyMc(){var on=mc();document.querySelectorAll(".colc").forEach(function(e){e.style.display=on?"":"none"})}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function renum(){Array.prototype.forEach.call(rowsEl.children,function(tr,i){tr.firstChild.textContent=cn(i+1)});applyMc()}
+function addRow(nm,col,n,mode,l,c){
+  var tr=document.createElement("tr");
+  tr.innerHTML='<td class="no"></td><td><input type="text" value="'+esc(nm)+'"></td><td class="colc"><input type="text" value="'+esc(col)+'" style="min-width:5.5em"></td><td><input type="number" inputmode="numeric" min="1" max="12" value="'+n+'" style="min-width:3.5em"></td><td><input type="number" inputmode="decimal" min="1" value="'+l+'" style="min-width:4.5em"></td><td><input type="number" inputmode="numeric" min="1" value="'+c+'" style="min-width:3.5em"></td><td><button class="x" title="削除">✕</button></td>';
+  tr.querySelector("button").onclick=function(){tr.remove();renum()};
+  rowsEl.appendChild(tr);
+  renum();
+}
+[["底ひも","ベージュ",4,"w",120,3],["側面ひも","ベージュ",3,"w",150,4],["持ち手","ベージュ",2,"w",90,2],["ふちひも","ブラウン",3,"w",110,4],["飾りひも","ブラウン",2,"w",40,3]].forEach(function(r){addRow.apply(null,r)});
+document.getElementById("add").onclick=function(){addRow("","",3,"t",100,1)};
+document.getElementById("go").onclick=run;
+Array.prototype.forEach.call(document.getElementsByName("mc"),function(r){r.onchange=function(){applyMc();run()}});
+
+function pack(pieces){
+  pieces.sort(function(a,b){return b.L-a.L||b.w-a.w});
+  var segs=[];
+  pieces.forEach(function(p){
+    var best=null,bs=1e18;
+    segs.forEach(function(s){s.lanes.forEach(function(ln){
+      if(ln.w===p.w&&ln.rem>=p.L){var sc=ln.rem-p.L;if(sc<bs){bs=sc;best={s:s,ln:ln}}}
+    })});
+    if(!best){
+      bs=1e18;
+      segs.forEach(function(s){
+        var free=12-s.used;
+        if(free>=p.w-1e-9&&s.len>=p.L){var sc=(free-p.w)*10000+(s.len-p.L);if(sc<bs){bs=sc;best={s:s,mk:1}}}
+      });
+    }
+    if(!best){var ns={len:p.L,used:0,lanes:[]};segs.push(ns);best={s:ns,mk:1}}
+    if(best.mk){var ln={w:p.w,rem:best.s.len,items:[]};best.s.lanes.push(ln);best.s.used+=p.w;best.ln=ln}
+    best.ln.items.push({L:p.L,id:p.id});best.ln.rem-=p.L;
+  });
+  return segs;
+}
+function fmt(n){return Math.round(n*10)/10}
+function svg(s){
+  var W=640,H=120,u=H/12,sx=W/s.len,y=0,h="";
+  s.lanes.forEach(function(ln){
+    var x=0;
+    ln.items.forEach(function(it){
+      var L=it.L;
+      h+='<rect x="'+x*sx+'" y="'+y+'" width="'+L*sx+'" height="'+ln.w*u+'" fill="'+COLORS(ln.w)+'" stroke="#8a7a6a" stroke-width="1"/>';
+      h+='<text x="'+(x+L/2)*sx+'" y="'+(y+ln.w*u/2+4)+'" font-size="11" text-anchor="middle" fill="#2b2118">'+cn(it.id)+' '+fmt(L)+'cm</text>';
+      x+=L;
+    });
+    if(ln.rem>0)h+='<rect x="'+x*sx+'" y="'+y+'" width="'+ln.rem*sx+'" height="'+ln.w*u+'" fill="none" stroke="#c0392b" stroke-dasharray="4 3"/>';
+    y+=ln.w*u;
+  });
+  if(12-s.used>1e-9)h+='<rect x="0" y="'+y+'" width="'+W+'" height="'+(H-y)+'" fill="none" stroke="#c0392b" stroke-dasharray="4 3"/><text x="'+W/2+'" y="'+(y+(H-y)/2+4)+'" font-size="11" text-anchor="middle" fill="#c0392b">余り '+fmt(12-s.used)+'本幅</text>';
+  return '<div class="scroll"><svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:420px"><rect x="0" y="0" width="'+W+'" height="'+H+'" fill="none" stroke="#8a7a6a"/>'+h+'</svg></div>';
+}
+function run(){
+  var groups={},order=[],names={},err="";
+  Array.prototype.forEach.call(rowsEl.children,function(tr,idx){
+    var v=tr.querySelectorAll("input,select");
+    var nm=v[0].value.trim(),col=mc()?(v[1].value.trim()||"（色の指定なし）"):"全体",n=parseInt(v[2].value),L=parseFloat(v[3].value),c=parseInt(v[4].value);
+    if(!n&&!L)return;
+    var ok=n>=1&&n<=12&&L>0&&c>=1;
+    
+    if(!ok){err="幅は1〜12、長さと本数は1以上で入力してください。";return}
+    var w=n;
+    if(!groups[col]){groups[col]=[];order.push(col)}
+    names[idx+1]=nm;
+    for(var i=0;i<c;i++)groups[col].push({w:w,L:L,id:idx+1});
+  });
+  var out=document.getElementById("out");
+  if(err||!order.length){out.innerHTML='<div class="card">'+(err||"材料を入力してください。")+'</div>';return}
+  var all=0,allUsed=0,body="",sum="";
+  order.forEach(function(col){
+    var segs=pack(groups[col]),tot=0,used=0,h="";
+    segs.forEach(function(s,i){
+      tot+=s.len;
+      h+='<div class="card step"><h3>【'+(i+1)+'回目】12本幅を '+fmt(s.len)+'cm にカット</h3>'+svg(s)+'<ul>';
+      s.lanes.forEach(function(ln){
+        ln.items.forEach(function(it){used+=ln.w*it.L});
+        var tori='';
+        h+='<li>'+fmt(ln.w)+'本幅'+tori+'に割く → '+ln.items.map(function(it){return cn(it.id)+(names[it.id]?esc(names[it.id])+' ':'')+fmt(it.L)+'cm'}).join(' + ')+(ln.items.length>1?'（'+ln.items.length+'本に切り分け）':'')+(ln.rem>0?'　<span class="sub">端材 '+fmt(ln.rem)+'cm</span>':'')+'</li>';
+      });
+      if(12-s.used>1e-9)h+='<li class="sub">余り '+fmt(12-s.used)+'本幅 × '+fmt(s.len)+'cm（次回用にとっておけます）</li>';
+      h+='</ul></div>';
+    });
+    all+=tot;allUsed+=used;
+    sum+='<li>'+(mc()?esc(col)+'：':'')+'12本幅を <b>'+fmt(tot)+'cm</b>（'+segs.length+'回カット・使用率 '+fmt(used/(tot*12)*100)+'%）</li>';
+    body+=(mc()?'<h2>■ '+esc(col)+'</h2>':'')+h;
+  });
+  out.innerHTML='<div class="card stat">必要な12本幅テープ（合計 <b>'+fmt(all)+'cm</b>／使用率 '+fmt(allUsed/(all*12)*100)+'%）<ul>'+sum+'</ul></div>'+body+'<p class="sub">※長い材料から順に、空いている幅へ当てはめる方法で計算しています。必ず最短とは限りませんが、実用上かなり無駄を抑えられます。色が違う材料は同じテープから取れないので、色ごとに分けて計算しています。</p>';
+}
+run();
+</script>
+</body>
+</html>
