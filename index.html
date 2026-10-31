@@ -41,7 +41,7 @@ input[type=radio]{width:auto;margin-right:6px}
 </head>
 <body>
 <h1>✂️ むだなくカット</h1>
-<p class="sub">レシピの表を入力すると、12本幅テープから無駄なく切り出す図表を作成します。「3本取り」も「3本幅」も、数字の3をそのまま幅の欄に入力してください。<br>※最初に入っている数字は例です。ご自分のレシピの数字に書き換えてください。<br>※パーツ名（メモ）欄は入力は必須項目ではありません。必要に応じてご使用ください。<br>※個人で利用することを前提にしたアプリです。ご利用前に、いちばん下の「ご利用にあたって」をお読みください。</p>
+<p class="sub">紙バンドの「幅」「長さ」「本数」を入力すると、12本幅テープから無駄なく切り出す図表を作成します。<br>※最初に入っている数字は例です。ご自分のレシピの数字に書き換えてください。（入力をすべてクリアボタンを押すと確認後削除できます）<br>※パーツ名（メモ）欄は入力は必須項目ではありません。必要に応じてご使用ください。<br>※個人で利用することを前提にしたアプリです。ご利用前に、いちばん下の「ご利用にあたって」をお読みください。</p>
 
 <div class="card"><b>複数の色を使いますか？</b>
 <div class="row"><label><input type="radio" name="mc" value="0">使わない</label><label><input type="radio" name="mc" value="1" checked>使う</label></div></div>
@@ -195,7 +195,7 @@ var cap=Math.max(1,Math.floor((AV-hdr)/(HM+TK+GP))),BL=maxLen,gd=0;
 while(nb(BL)>cap&&BL<tot0&&gd++<400)BL+=Math.max(1,maxLen*0.05);
 BL=Math.ceil(BL);var NB=nb(BL),BH=Math.max(36,Math.min(120,Math.floor((AV-hdr)/NB)-TK-GP));
 allSegs.forEach(function(g){if(mc())fg+='<h2>■ '+esc(g.col)+'</h2>';bars(g.segs,BL).forEach(function(b){fg+='<div class="fig">'+barSvg(b,BL,BH)+'</div>'})});
-var summary='<div class="card" id="sum"><h2 style="margin-top:0">✂️ カット図のまとめ</h2><div class="sub">'+keys+'</div><div class="sub" style="margin:6px 0">同じ縮尺で表示しています。バーの長さ＝'+fmt(BL)+'cm、高さ＝12本幅です。A4横1枚に収まるよう、バーの長さと大きさを自動で調整しています。太い縦線はテープを切る位置、赤い点線は余りの部分です。</div><div class="hint noprint">↔ 図は左右にスクロールできます。</div>'+fg+'<div class="row noprint"><button id="prn">この図を印刷（A4横）</button></div></div>';out.innerHTML=summary+'<div class="card stat">必要な12本幅テープ（合計 <b>'+fmt(all)+'cm</b>／使用率 '+fmt(allUsed/(all*12)*100)+'%）<ul>'+sum+'</ul></div>'+'<p class="sub">※長い材料から順に、空いている幅へ当てはめる方法で計算しています。必ず最短とは限りませんが、実用上かなり無駄を抑えられます。色が違う材料は同じテープから取れないので、色ごとに分けて計算しています。</p>';
+var summary='<div class="card" id="sum"><h2 style="margin-top:0">✂️ カット図のまとめ</h2><div class="sub">'+keys+'</div><div class="sub" style="margin:6px 0">同じ縮尺で表示しています。バーの長さ＝'+fmt(BL)+'cm、高さ＝12本幅です。A4横1枚に収まるよう、バーの長さと大きさを自動で調整しています。太い縦線はテープを切る位置、赤い点線は余りの部分です。</div><div class="hint noprint">↔ 図は左右にスクロールできます。</div>'+fg+'<div class="row noprint"><button id="prn">この図を印刷（A4横）</button></div><div class="sub noprint" style="margin-top:6px">印刷画面が開かないときは、ブラウザの共有（またはメニュー）から「プリント」を選んでください。</div></div>';out.innerHTML=summary+'<div class="card stat">必要な12本幅テープ（合計 <b>'+fmt(all)+'cm</b>／使用率 '+fmt(allUsed/(all*12)*100)+'%）<ul>'+sum+'</ul></div>'+'<p class="sub">※長い材料から順に、空いている幅へ当てはめる方法で計算しています。必ず最短とは限りませんが、実用上かなり無駄を抑えられます。色が違う材料は同じテープから取れないので、色ごとに分けて計算しています。</p>';
 }
 document.addEventListener("click",function(e){if(e.target&&e.target.id==="prn")window.print()});
 var clrT=null;
